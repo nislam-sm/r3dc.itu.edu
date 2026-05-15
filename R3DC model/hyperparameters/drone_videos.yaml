@@ -1,0 +1,71 @@
+# Drone-Videos benchmark - R3DC (lightweight) config
+# Reaches 0.67 m RMSE at epoch 4 (Table 7); the run continues to 10 epochs
+# but the best checkpoint is selected by val RMSE.
+
+dataset:
+  name: drone_videos
+  root: /datasets/drone_videos
+  cache_dir: /datasets/drone_videos/_r3dc_cache
+  d_min: 0.0
+  d_max: 50.0
+  density: 0.025
+
+input:
+  size: [384, 640]
+
+model:
+  variant: outdoor
+  base_channels: 32           # B=32 -> ~1.47M params
+  num_iters: 6
+  cma_token_limit: 512
+  drop_path: 0.10
+  use_uncertainty: true
+  use_aux: true
+
+loss:
+  silog: 1.00
+  focal_berhu: 0.60
+  ssim: 0.20
+  anchor: 0.15
+  vnl: 0.10
+  dnc: 0.05
+  grad: 0.05
+  uncertainty: 0.05
+  aux: 0.10
+  silog_alpha: 0.85
+  focal_gamma: 2.0
+  berhu_c_ratio: 0.2
+  vnl_num_samples: 4096
+
+optim:
+  optimizer: adamw
+  lr: 1.0e-4
+  weight_decay: 1.0e-4
+  betas: [0.9, 0.999]
+  amp: true
+
+scheduler:
+  name: cosine
+  eta_min: 1.0e-4              # short run, no aggressive decay
+  warmup_epochs: 0
+
+training:
+  epochs: 10
+  batch_size: 4
+  num_workers: 4
+  ema_decay: 0.9999
+  grad_clip: 1.0
+  log_every: 50
+  ckpt_every: 1
+  seed: 42
+
+augment:
+  hflip: 0.5
+  color_jitter: 0.2
+  gamma_lo: 0.8
+  gamma_hi: 1.2
+  sparse_dropout: 0.3
+  sparse_dropout_rate: 0.5
+  cutmix: 0.3
+  cutmix_lo: 0.3
+  cutmix_hi: 0.7

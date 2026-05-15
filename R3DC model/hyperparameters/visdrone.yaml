@@ -1,0 +1,73 @@
+# VisDrone aerial benchmark - R3DC+ v3 config
+# Matches the 20-epoch run with 5-epoch warmup that produces the
+# 2.33 m / delta_1 = 0.928 checkpoint at epoch 18.
+
+dataset:
+  name: visdrone
+  root: /datasets/visdrone
+  cache_dir: /datasets/visdrone/_r3dc_cache
+  d_min: 1.0
+  d_max: 80.0
+  density: 0.025
+
+input:
+  size: [384, 640]
+
+model:
+  variant: outdoor
+  base_channels: 64            # B=64 -> ~11.22M with v3 widening
+  num_iters: 6
+  cma_token_limit: 512
+  drop_path: 0.10
+  use_uncertainty: true
+  use_aux: true
+
+loss:
+  silog: 1.00
+  focal_berhu: 0.60
+  ssim: 0.20
+  anchor: 0.15
+  vnl: 0.10
+  dnc: 0.05
+  grad: 0.05
+  uncertainty: 0.05
+  aux: 0.10
+  silog_alpha: 0.85
+  focal_gamma: 2.0
+  berhu_c_ratio: 0.2
+  vnl_num_samples: 4096
+
+optim:
+  optimizer: adamw
+  lr: 1.0e-4
+  weight_decay: 1.0e-4
+  betas: [0.9, 0.999]
+  amp: true
+
+scheduler:
+  name: cosine_warm_restarts
+  T_0: 10
+  T_mult: 2
+  eta_min: 1.0e-6
+  warmup_epochs: 5             # 5-epoch linear warmup essential for synthetic GT
+
+training:
+  epochs: 20
+  batch_size: 4
+  num_workers: 4
+  ema_decay: 0.9999
+  grad_clip: 1.0
+  log_every: 50
+  ckpt_every: 1
+  seed: 42
+
+augment:
+  hflip: 0.5
+  color_jitter: 0.2
+  gamma_lo: 0.8
+  gamma_hi: 1.2
+  sparse_dropout: 0.3
+  sparse_dropout_rate: 0.5
+  cutmix: 0.3
+  cutmix_lo: 0.3
+  cutmix_hi: 0.7

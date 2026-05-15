@@ -1,0 +1,74 @@
+# NYU Depth V2 - R3DC+ICH config
+# Indoor variant: the dual-stream encoder is replaced by a frozen
+# Depth Anything V2 (ViT-S) backbone; only the ICH (16,642 params) and
+# output heads are trained.
+
+dataset:
+  name: nyu
+  root: /datasets/nyu_depth_v2
+  mat_path: null
+  d_min: 0.001
+  d_max: 10.0
+  density: 0.001               # ~0.1% sparse anchors
+
+input:
+  size: [518, 518]
+
+model:
+  variant: indoor              # selects R3DC+ICH (depth_anything backbone)
+  backbone: depth_anything_v2_vits
+  freeze_backbone: true
+  ich_hidden: 64
+  ich_layers: 3
+  num_iters: 6
+  use_uncertainty: true
+  use_aux: false               # no deep-supervised aux heads with frozen backbone
+
+loss:
+  silog: 1.00
+  focal_berhu: 0.60
+  ssim: 0.20
+  anchor: 0.15
+  vnl: 0.10
+  dnc: 0.05
+  grad: 0.05
+  uncertainty: 0.05
+  aux: 0.0
+  silog_alpha: 0.85
+  focal_gamma: 2.0
+  berhu_c_ratio: 0.2
+  vnl_num_samples: 4096
+
+optim:
+  optimizer: adamw
+  lr: 5.0e-6
+  weight_decay: 1.0e-4
+  betas: [0.9, 0.999]
+  amp: true
+
+scheduler:
+  name: cosine
+  eta_min: 1.0e-7
+  warmup_epochs: 0.5
+
+training:
+  epochs: 10
+  batch_size: 11
+  num_workers: 4
+  ema_decay: 0.9999
+  grad_clip: 1.0
+  log_every: 50
+  ckpt_every: 1
+  seed: 42
+  ddp: true                    # 2x Tesla T4
+
+augment:
+  hflip: 0.5
+  color_jitter: 0.2
+  gamma_lo: 0.8
+  gamma_hi: 1.2
+  sparse_dropout: 0.3
+  sparse_dropout_rate: 0.5
+  cutmix: 0.0                  # disable cutmix for the indoor recipe
+  cutmix_lo: 0.3
+  cutmix_hi: 0.7
